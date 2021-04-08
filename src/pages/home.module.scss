@@ -1,1 +1,47 @@
-// TODO
+.container {
+  max-width: 50%;
+  margin: 0 auto;
+}
+
+.posts {
+  margin: 5rem 0;
+
+  a {
+    display: block;
+
+    & + a {
+      margin-top: 1.5rem;
+      padding-top: 1.5rem;
+    }
+
+    h1 {
+      font-weight: 600;
+    }
+
+    h2 {
+      color: var(--gray-100);
+      font-weight: 400;
+      font-size: 1.5rem;
+      margin-top: 1rem;
+    }
+
+    div {
+      display: flex;
+      margin-top: 1.5rem;
+    }
+
+    p {
+      display: flex;
+      align-items: center;
+      font-size: 1rem;
+      color: var(--gray-200);
+
+      & + p {
+        margin-left: 2rem;
+      }
+      span {
+        margin-right: 0.5rem;
+      }
+    }
+  }
+}
