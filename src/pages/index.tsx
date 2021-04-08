@@ -1,8 +1,10 @@
 import { GetStaticProps } from 'next';
 import Link from 'next/link'
 
-import Prismic from '@prismicio/client'
+import { format } from 'date-fns';
+import ptBR from 'date-fns/locale/pt-BR';
 
+import Prismic from '@prismicio/client'
 import { getPrismicClient } from '../services/prismic';
 
 import commonStyles from '../styles/common.module.scss';
@@ -10,6 +12,7 @@ import styles from './home.module.scss';
 
 import { FiUser, FiCalendar } from "react-icons/fi";
 import { IconContext } from 'react-icons'
+import { useState } from 'react';
 
 interface Post {
   uid?: string;
@@ -31,12 +34,24 @@ interface HomeProps {
 }
 
 export default function Home({ postsPagination: { next_page, results } }: HomeProps) {
+  const [posts, setPosts] = useState<Post[]>([...results])
+  const [nextPage, setNextPage] = useState(next_page)
+
+  function handleNextPage() {
+    fetch(nextPage)
+      .then(response => response.json())
+      .then(data => {
+        setPosts(data.results)
+        setNextPage(data.next_page)
+      })
+  }
+
   return (
     <>
       <main className={ styles.container }>
         <div className={ styles.posts }>
           {
-            results.map(post => {
+            posts.map(post => {
               return (
                 <Link href={ `/post/${post.uid}` } key={ post.uid }>
                   <a>
@@ -54,6 +69,9 @@ export default function Home({ postsPagination: { next_page, results } }: HomePr
             })
           }
         </div>
+        {
+          nextPage ? (<button onClick={ handleNextPage }>Carregar mais posts</button>) : null
+        }
       </main>
     </>
   )
@@ -61,21 +79,23 @@ export default function Home({ postsPagination: { next_page, results } }: HomePr
 
 export const getStaticProps: GetStaticProps = async () => {
   const prismic = getPrismicClient();
-  const postsResponse = await prismic.query([
-    Prismic.predicates.at('document.type', 'posts')
-  ]);
+  const postsResponse = await prismic.query(
+    [Prismic.predicates.at('document.type', 'posts')],
+    {
+      pageSize: 1,
+    });
 
   const posts = postsResponse.results.map(post => {
-    const month = (new Date(post.first_publication_date).toLocaleDateString('pt-BR', {
-      month: 'long',
-    })).slice(0, 3)
     return {
       uid: post.uid,
-      first_publication_date: `${(new Date(post.first_publication_date).toLocaleDateString('pt-BR', {
-        day: '2-digit',
-      }))} ${month.charAt(0).toUpperCase() + month.slice(1)} ${(new Date(post.first_publication_date).toLocaleDateString('pt-BR', {
-        year: 'numeric'
-      }))}`,
+      first_publication_date:
+        format(
+          new Date(post.first_publication_date),
+          "dd MMM y",
+          {
+            locale: ptBR,
+          }
+        ),
       data: {
         title: post.data.title,
         subtitle: post.data.subtitle,

@@ -9,7 +9,7 @@ export function Header() {
     <header className={ `${styles.headerContainer} ${router.pathname === '/' ? styles.headerHomeMargin : ''}` }>
       <Link href='/'>
         <a className={ styles.headerContent }>
-          <img src="/Logo.svg" alt="Logo" />
+          <img src="/Logo.svg" alt="logo" />
         </a>
       </Link>
     </header>

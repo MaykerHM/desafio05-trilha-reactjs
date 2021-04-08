@@ -1,10 +1,16 @@
 import { GetStaticPaths, GetStaticProps } from 'next';
-import Prismic from '@prismicio/client'
 
+import { format } from 'date-fns';
+import ptBR from 'date-fns/locale/pt-BR';
+
+import { RichText } from 'prismic-dom'
+import Prismic from '@prismicio/client'
 import { getPrismicClient } from '../../services/prismic';
 
 import commonStyles from '../../styles/common.module.scss';
 import styles from './post.module.scss';
+import { FiUser, FiCalendar, FiClock } from "react-icons/fi";
+import { IconContext } from 'react-icons'
 
 interface Post {
   uid?: string;
@@ -30,27 +36,29 @@ interface PostProps {
 }
 
 export default function Post({ post }: PostProps) {
+  const readingTime = post.data.content.reduce((acc, content) => {
+    return
+  })
   return (
     <>
-      <main>
+      <main className={ styles.Container }>
         <article>
           <img src={ post.data.banner.url } alt={ post.data.title } />
           <h1>{ post.data.title }</h1>
           <h2>{ post.data.subtitle }</h2>
           <div>
-            <p>{ post.first_publication_date }</p>
-            <p>{ post.data.author }</p>
+            <IconContext.Provider value={ { size: '1.5rem' } }>
+              <p><span><FiCalendar /></span>{ post.first_publication_date }</p>
+              <p><span><FiUser /></span>{ post.data.author }</p>
+              <p><span><FiClock /></span>{ readingTime + ' min' }</p>
+            </IconContext.Provider>
           </div>
           {
             post.data.content.map(content => {
               return (
                 <div key={ content.heading }>
                   <h2>{ content.heading }</h2>
-                  { content.body.map(text => {
-                    return (
-                      <p key={ text.text }>{ text.text }</p>
-                    )
-                  }) }
+                  { RichText.asText(content.body) }
                 </div>
               )
             })
@@ -91,11 +99,14 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
 
   const post: Post = {
     uid: response.uid,
-    first_publication_date: new Date(response.first_publication_date).toLocaleDateString('pt-BR', {
-      day: '2-digit',
-      month: 'long',
-      year: 'numeric'
-    }),
+    first_publication_date:
+      format(
+        new Date(response.first_publication_date),
+        "dd MMM y",
+        {
+          locale: ptBR,
+        }
+      ),
     data: {
       title: response.data.title,
       subtitle: response.data.subtitle,
