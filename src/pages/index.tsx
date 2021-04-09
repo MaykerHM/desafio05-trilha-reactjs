@@ -48,7 +48,14 @@ export default function Home({ postsPagination: { next_page, results } }: HomePr
 
   return (
     <>
-      <main className={ styles.container }>
+      <header className={ styles.headerContainer }>
+        <Link href='/'>
+          <a>
+            <img src="/Logo.svg" alt="logo" />
+          </a>
+        </Link>
+      </header>
+      <main className={ commonStyles.container }>
         <div className={ styles.posts }>
           {
             posts.map(post => {
@@ -59,7 +66,13 @@ export default function Home({ postsPagination: { next_page, results } }: HomePr
                     <h2>{ post.data.subtitle }</h2>
                     <div>
                       <IconContext.Provider value={ { size: '1.5rem' } }>
-                        <p><span><FiCalendar /></span>{ post.first_publication_date }</p>
+                        <p><span><FiCalendar /></span>{ format(
+                          new Date(post.first_publication_date),
+                          "dd MMM y",
+                          {
+                            locale: ptBR,
+                          }
+                        ) }</p>
                         <p><span><FiUser /></span>{ post.data.author }</p>
                       </IconContext.Provider>
                     </div>
@@ -70,7 +83,7 @@ export default function Home({ postsPagination: { next_page, results } }: HomePr
           }
         </div>
         {
-          nextPage ? (<button onClick={ handleNextPage }>Carregar mais posts</button>) : null
+          nextPage ? (<a onClick={ handleNextPage }>Carregar mais posts</a>) : null
         }
       </main>
     </>
@@ -88,14 +101,7 @@ export const getStaticProps: GetStaticProps = async () => {
   const posts = postsResponse.results.map(post => {
     return {
       uid: post.uid,
-      first_publication_date:
-        format(
-          new Date(post.first_publication_date),
-          "dd MMM y",
-          {
-            locale: ptBR,
-          }
-        ),
+      first_publication_date: post.first_publication_date,
       data: {
         title: post.data.title,
         subtitle: post.data.subtitle,

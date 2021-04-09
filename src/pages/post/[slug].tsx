@@ -4,8 +4,9 @@ import { format } from 'date-fns';
 import ptBR from 'date-fns/locale/pt-BR';
 
 import { RichText } from 'prismic-dom'
-import Prismic from '@prismicio/client'
 import { getPrismicClient } from '../../services/prismic';
+
+import { Header } from '../../components/Header'
 
 import commonStyles from '../../styles/common.module.scss';
 import styles from './post.module.scss';
@@ -36,65 +37,77 @@ interface PostProps {
 }
 
 export default function Post({ post }: PostProps) {
-  const readingTime = post.data.content.reduce((acc, content) => {
-    return
-  })
+  const onlyWordsRegex = new RegExp('\\w')
+  const onlySpacesRegex = new RegExp(String.fromCharCode(160), "g")
+
+  const wordsArray = post?.data.content.reduce((acc, content) => {
+    return [...acc, ...content.heading.replace(onlySpacesRegex, ' ').split(' '), ...RichText.asText(content.body).replace(onlySpacesRegex, ' ').split(' ')]
+  }, []).filter(string => string.match(onlyWordsRegex))
+
+  const readingTime = Math.ceil(wordsArray.length / 200)
+
   return (
     <>
-      <main className={ styles.Container }>
-        <article>
-          <img src={ post.data.banner.url } alt={ post.data.title } />
-          <h1>{ post.data.title }</h1>
-          <h2>{ post.data.subtitle }</h2>
-          <div>
-            <IconContext.Provider value={ { size: '1.5rem' } }>
-              <p><span><FiCalendar /></span>{ post.first_publication_date }</p>
-              <p><span><FiUser /></span>{ post.data.author }</p>
-              <p><span><FiClock /></span>{ readingTime + ' min' }</p>
-            </IconContext.Provider>
-          </div>
-          {
-            post.data.content.map(content => {
-              return (
-                <div key={ content.heading }>
-                  <h2>{ content.heading }</h2>
-                  { RichText.asText(content.body) }
-                </div>
-              )
-            })
-          }
-        </article>
-      </main>
+      <Header />
+      {
+        post ?
+          (<>
+            <div className={ styles.banner }>
+              <img src={ post.data.banner.url } alt={ post.data.title } />
+            </div>
+            <main className={ commonStyles.container }>
+              <div className={ styles.content }>
+                <header>
+                  <h1>{ post.data.title }</h1>
+                  <div>
+                    <IconContext.Provider value={ { size: '1.5rem' } }>
+                      <p><span><FiCalendar /></span>{ post.first_publication_date }</p>
+                      <p><span><FiUser /></span>{ post.data.author }</p>
+                      <p><span><FiClock /></span>{ readingTime + ' min' }</p>
+                    </IconContext.Provider>
+                  </div>
+                </header>
+                <article>
+                  {
+                    post.data.content.map(content => {
+                      return (
+                        <div key={ content.heading }>
+                          <h2>{ content.heading }</h2>
+                          <div dangerouslySetInnerHTML={ { __html: RichText.asHtml(content.body) } } />
+                          {/* { RichText.asHtml(content.body) } */ }
+                        </div>
+                      )
+                    })
+                  }
+                </article>
+              </div>
+            </main>
+          </>
+          )
+          : (
+            <main className={ styles.Loading }>
+              <h1>Carregando....</h1>
+            </main>
+          )
+      }
     </>
   )
 }
 
 export const getStaticPaths: GetStaticPaths = async () => {
-  const prismic = getPrismicClient();
-  const posts = await prismic.query([
-    Prismic.predicates.at('document.type', 'posts')
-  ], {
-    fetch: ['posts.slug']
-  });
-
-  const paths = posts.results.map(
-    post => {
-      return {
-        params: { slug: String(post.uid) }
-      }
-    }
-  )
-
-
 
   return {
-    paths, fallback: false
+    paths: [
+      { params: { slug: 'nextjs-novidades-na-versao-10-e-atualizacao-do-blog-para-melhorar-a-performance' } }
+    ],
+    fallback: true
   }
 };
 
 export const getStaticProps: GetStaticProps = async ({ params }) => {
   const { slug } = params
   const prismic = getPrismicClient();
+
   const response = await prismic.getByUID('posts', String(slug), {});
 
   const post: Post = {

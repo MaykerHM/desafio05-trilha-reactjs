@@ -1,6 +1,12 @@
-.container {
-  max-width: 50%;
-  margin: 0 auto;
+.headerContainer {
+  height: 5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 5rem;
+  a {
+    width: 50%;
+  }
 }
 
 .posts {
@@ -42,6 +48,18 @@
       span {
         margin-right: 0.5rem;
       }
+    }
+    transition: filter 0.2s;
+    &:hover {
+      filter: brightness(1.5);
+    }
+  }
+  & + a {
+    color: var(--pink-500);
+    cursor: pointer;
+    transition: filter 0.2s;
+    &:hover {
+      filter: brightness(0.9);
     }
   }
 }
