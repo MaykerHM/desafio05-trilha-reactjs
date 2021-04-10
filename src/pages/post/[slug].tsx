@@ -1,8 +1,10 @@
 import { GetStaticPaths, GetStaticProps } from 'next';
+import { useRouter } from 'next/router'
 
 import { format } from 'date-fns';
 import ptBR from 'date-fns/locale/pt-BR';
 
+import Prismic from '@prismicio/client'
 import { RichText } from 'prismic-dom'
 import { getPrismicClient } from '../../services/prismic';
 
@@ -12,6 +14,7 @@ import commonStyles from '../../styles/common.module.scss';
 import styles from './post.module.scss';
 import { FiUser, FiCalendar, FiClock } from "react-icons/fi";
 import { IconContext } from 'react-icons'
+import { Router } from 'next/router';
 
 interface Post {
   uid?: string;
@@ -46,60 +49,78 @@ export default function Post({ post }: PostProps) {
 
   const readingTime = Math.ceil(wordsArray.length / 200)
 
+  const router = useRouter()
+
+  if (router.isFallback) {
+    return (
+      <main className={ styles.Loading }>
+        <h1>Carregando...</h1>
+      </main>
+    )
+  }
+
   return (
     <>
       <Header />
       {
-        post ?
-          (<>
-            <div className={ styles.banner }>
-              <img src={ post.data.banner.url } alt={ post.data.title } />
+        <>
+          <div className={ styles.banner }>
+            <img src={ post.data.banner.url } alt={ post.data.title } />
+          </div>
+          <main className={ commonStyles.container }>
+            <div className={ styles.content }>
+              <header>
+                <h1>{ post.data.title }</h1>
+                <div>
+                  <IconContext.Provider value={ { size: '1.5rem' } }>
+                    <p><span><FiCalendar /></span>{ format(
+                      new Date(post.first_publication_date),
+                      "dd MMM y",
+                      {
+                        locale: ptBR,
+                      }
+                    ) }</p>
+                    <p><span><FiUser /></span>{ post.data.author }</p>
+                    <p><span><FiClock /></span>{ readingTime + ' min' }</p>
+                  </IconContext.Provider>
+                </div>
+              </header>
+              <article>
+                {
+                  post.data.content.map(content => {
+                    return (
+                      <div key={ content.heading }>
+                        <h2>{ content.heading }</h2>
+                        <div dangerouslySetInnerHTML={ { __html: RichText.asHtml(content.body) } } />
+                        {/* { RichText.asHtml(content.body) } */ }
+                      </div>
+                    )
+                  })
+                }
+              </article>
             </div>
-            <main className={ commonStyles.container }>
-              <div className={ styles.content }>
-                <header>
-                  <h1>{ post.data.title }</h1>
-                  <div>
-                    <IconContext.Provider value={ { size: '1.5rem' } }>
-                      <p><span><FiCalendar /></span>{ post.first_publication_date }</p>
-                      <p><span><FiUser /></span>{ post.data.author }</p>
-                      <p><span><FiClock /></span>{ readingTime + ' min' }</p>
-                    </IconContext.Provider>
-                  </div>
-                </header>
-                <article>
-                  {
-                    post.data.content.map(content => {
-                      return (
-                        <div key={ content.heading }>
-                          <h2>{ content.heading }</h2>
-                          <div dangerouslySetInnerHTML={ { __html: RichText.asHtml(content.body) } } />
-                          {/* { RichText.asHtml(content.body) } */ }
-                        </div>
-                      )
-                    })
-                  }
-                </article>
-              </div>
-            </main>
-          </>
-          )
-          : (
-            <main className={ styles.Loading }>
-              <h1>Carregando....</h1>
-            </main>
-          )
+          </main>
+        </>
       }
     </>
   )
 }
 
 export const getStaticPaths: GetStaticPaths = async () => {
+  const prismic = getPrismicClient();
+
+  const posts = await prismic.query(
+    [Prismic.predicates.at('document.type', 'posts')],
+    {
+      fetch: ['posts.title', 'posts.subtitle', 'posts.author', 'posts.content']
+    });
+
+  const paths = posts.results.map(post => ({
+    params: { slug: post.uid }
+  }))
 
   return {
-    paths: [
-      { params: { slug: 'nextjs-novidades-na-versao-10-e-atualizacao-do-blog-para-melhorar-a-performance' } }
-    ],
+    paths,
     fallback: true
   }
 };
@@ -112,14 +133,7 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
 
   const post: Post = {
     uid: response.uid,
-    first_publication_date:
-      format(
-        new Date(response.first_publication_date),
-        "dd MMM y",
-        {
-          locale: ptBR,
-        }
-      ),
+    first_publication_date: response.first_publication_date,
     data: {
       title: response.data.title,
       subtitle: response.data.subtitle,
