@@ -33,7 +33,7 @@ interface HomeProps {
   postsPagination: PostPagination;
 }
 
-export default function Home({ postsPagination: { next_page, results } }: HomeProps) {
+export default function Home({ postsPagination: { next_page, results } }: HomeProps): JSX.Element {
   const [posts, setPosts] = useState<Post[]>([...results])
   const [nextPage, setNextPage] = useState(next_page)
 
@@ -85,6 +85,7 @@ export default function Home({ postsPagination: { next_page, results } }: HomePr
         {
           nextPage ? (<a onClick={ handleNextPage }>Carregar mais posts</a>) : null
         }
+
       </main>
     </>
   )

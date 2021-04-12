@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { GetStaticPaths, GetStaticProps } from 'next';
 import { useRouter } from 'next/router'
 
@@ -14,7 +15,6 @@ import commonStyles from '../../styles/common.module.scss';
 import styles from './post.module.scss';
 import { FiUser, FiCalendar, FiClock } from "react-icons/fi";
 import { IconContext } from 'react-icons'
-import { Router } from 'next/router';
 
 interface Post {
   uid?: string;
@@ -59,6 +59,19 @@ export default function Post({ post }: PostProps) {
     )
   }
 
+  useEffect(() => {
+    let script = document.createElement("script");
+    let anchor = document.getElementById("inject-comments-for-uterances");
+    script.setAttribute("src", "https://utteranc.es/client.js");
+    script.setAttribute("crossorigin", "anonymous");
+    script.setAttribute("async", "true");
+    script.setAttribute("repo", "MaykerHM/desafio05-trilha-reactjs");
+    script.setAttribute("issue-term", "pathname");
+    script.setAttribute("theme", "photon-dark");
+    anchor.appendChild(script);
+  }, [])
+
+
   return (
     <>
       <Header />
@@ -97,6 +110,7 @@ export default function Post({ post }: PostProps) {
                     )
                   })
                 }
+                <div id="inject-comments-for-uterances"></div>
               </article>
             </div>
           </main>
