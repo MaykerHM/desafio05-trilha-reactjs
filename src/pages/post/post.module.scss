@@ -40,10 +40,15 @@
         }
       }
     }
+    > p {
+      color: var(--gray-100);
+      margin-top: 1rem;
+    }
   }
 
   article {
     padding-top: 1rem;
+    margin-bottom: 3.75rem;
     h2 {
       margin: 3rem 0;
       font-weight: 600;
@@ -57,6 +62,52 @@
     }
     li {
       list-style: none;
+    }
+  }
+
+  footer {
+    border-top: 1px solid var(--gray-100);
+    :first-child {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      div {
+        margin: 3rem 0 5rem 0;
+        width: 20vw;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+
+        h3 {
+          font-weight: 400;
+          font-size: 1.125rem;
+          margin-bottom: 0.5rem;
+        }
+
+        a {
+          color: var(--pink-500);
+          font-size: 1rem;
+        }
+      }
+
+      :first-child {
+        h3 {
+          text-align: left;
+          display: block;
+        }
+        a {
+          text-align: left;
+        }
+      }
+      :last-child {
+        h3 {
+          text-align: right;
+          display: block;
+        }
+        a {
+          text-align: right;
+        }
+      }
     }
   }
 }

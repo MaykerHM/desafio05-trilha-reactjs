@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { GetStaticPaths, GetStaticProps } from 'next';
 import { useRouter } from 'next/router'
+import Link from 'next/link'
 
 import { format } from 'date-fns';
 import ptBR from 'date-fns/locale/pt-BR';
@@ -19,6 +20,7 @@ import { IconContext } from 'react-icons'
 interface Post {
   uid?: string;
   first_publication_date: string | null;
+  last_publication_date: string | null;
   data: {
     title: string;
     subtitle: string;
@@ -42,9 +44,10 @@ interface OtherPost {
 interface PostProps {
   post: Post;
   nextPost: OtherPost;
+  beforePost: OtherPost;
 }
 
-export default function Post({ post, nextPost }: PostProps) {
+export default function Post({ post, nextPost, beforePost }: PostProps) {
   const onlyWordsRegex = new RegExp('\\w')
   const onlySpacesRegex = new RegExp(String.fromCharCode(160), "g")
 
@@ -102,6 +105,23 @@ export default function Post({ post, nextPost }: PostProps) {
                     <p><span><FiClock /></span>{ readingTime + ' min' }</p>
                   </IconContext.Provider>
                 </div>
+                {
+                  post.first_publication_date !== post.last_publication_date ? (
+                    <p>{ `*editado em ${format(
+                      new Date(post.last_publication_date),
+                      "dd MMM y",
+                      {
+                        locale: ptBR,
+                      }
+                    )}, às ${format(
+                      new Date(post.last_publication_date),
+                      "HH:MM",
+                      {
+                        locale: ptBR,
+                      }
+                    )}` }</p>
+                  ) : null
+                }
               </header>
               <article>
                 {
@@ -110,22 +130,36 @@ export default function Post({ post, nextPost }: PostProps) {
                       <div key={ content.heading }>
                         <h2>{ content.heading }</h2>
                         <div dangerouslySetInnerHTML={ { __html: RichText.asHtml(content.body) } } />
-                        {/* { RichText.asHtml(content.body) } */ }
                       </div>
                     )
                   })
                 }
               </article>
               <footer>
-                <hr />
                 <div>
                   <div>
-                    <h1></h1>
-                    <a>Post anterior</a>
+                    {
+                      beforePost ? (
+                        <>
+                          <h3>{ beforePost?.title }</h3>
+                          <Link href={ `/post/${beforePost?.uid}` }>
+                            <a>Post anterior</a>
+                          </Link>
+                        </>
+                      ) : null
+                    }
                   </div>
                   <div>
-                    <h1>${ nextPost?.title }</h1>
-                    <a>Próximo post</a>
+                    {
+                      nextPost ? (
+                        <>
+                          <h3>{ nextPost?.title }</h3>
+                          <Link href={ `/post/${nextPost?.uid}` }>
+                            <a>Próximo post</a>
+                          </Link>
+                        </>
+                      ) : null
+                    }
                   </div>
                 </div>
                 <div id="inject-comments-for-uterances"></div>
@@ -166,6 +200,7 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
   const post: Post = {
     uid: response.uid,
     first_publication_date: response.first_publication_date,
+    last_publication_date: response.last_publication_date,
     data: {
       title: response.data.title,
       subtitle: response.data.subtitle,
@@ -175,20 +210,38 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
     },
   }
 
+  console.log(response)
+
   const nextPostResponse = await prismic.query(
     [Prismic.predicates.at('document.type', 'posts')],
     {
       after: `${response.id}`,
       orderings: '[document.first_publication_date]',
     });
+  let nextPost: OtherPost = null
+  if (nextPostResponse.results[0]) {
+    nextPost = {
+      uid: nextPostResponse.results[0]?.uid,
+      title: nextPostResponse.results[0]?.data.title,
+    }
+  }
 
-  const nextPost: OtherPost = {
-    uid: nextPostResponse.results[0].uid,
-    title: nextPostResponse.results[0].data.title,
+  const beforePostResponse = await prismic.query(
+    [Prismic.predicates.at('document.type', 'posts')],
+    {
+      after: `${response.id}`,
+      orderings: '[document.first_publication_date desc]',
+    });
+  let beforePost: OtherPost = null
+  if (beforePostResponse.results[0]) {
+    beforePost = {
+      uid: beforePostResponse.results[0]?.uid,
+      title: beforePostResponse.results[0]?.data.title,
+    }
   }
 
   return {
-    props: { post, nextPost },
+    props: { post, nextPost, beforePost },
     revalidate: 60 * 30 // 30 min
   }
 };
