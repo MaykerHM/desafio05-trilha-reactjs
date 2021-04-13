@@ -61,5 +61,26 @@
     &:hover {
       filter: brightness(0.9);
     }
+    & + aside {
+      margin: 5rem 0;
+      background: var(--white);
+      color: var(--black);
+      border-radius: 0.25rem;
+      font-size: 1.125rem;
+      font-weight: 600;
+      height: 3rem;
+      transition: filter 0.2s;
+
+      &:hover {
+        filter: brightness(0.9);
+      }
+      a {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+      }
+    }
   }
 }
