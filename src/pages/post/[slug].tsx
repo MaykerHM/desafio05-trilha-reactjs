@@ -34,12 +34,17 @@ interface Post {
     }[];
   };
 }
+interface OtherPost {
+  uid?: string;
+  title: string;
+}
 
 interface PostProps {
   post: Post;
+  nextPost: OtherPost;
 }
 
-export default function Post({ post }: PostProps) {
+export default function Post({ post, nextPost }: PostProps) {
   const onlyWordsRegex = new RegExp('\\w')
   const onlySpacesRegex = new RegExp(String.fromCharCode(160), "g")
 
@@ -110,8 +115,21 @@ export default function Post({ post }: PostProps) {
                     )
                   })
                 }
-                <div id="inject-comments-for-uterances"></div>
               </article>
+              <footer>
+                <hr />
+                <div>
+                  <div>
+                    <h1></h1>
+                    <a>Post anterior</a>
+                  </div>
+                  <div>
+                    <h1>${ nextPost?.title }</h1>
+                    <a>Próximo post</a>
+                  </div>
+                </div>
+                <div id="inject-comments-for-uterances"></div>
+              </footer>
             </div>
           </main>
         </>
@@ -157,8 +175,20 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
     },
   }
 
+  const nextPostResponse = await prismic.query(
+    [Prismic.predicates.at('document.type', 'posts')],
+    {
+      after: `${response.id}`,
+      orderings: '[document.first_publication_date]',
+    });
+
+  const nextPost: OtherPost = {
+    uid: nextPostResponse.results[0].uid,
+    title: nextPostResponse.results[0].data.title,
+  }
+
   return {
-    props: { post },
+    props: { post, nextPost },
     revalidate: 60 * 30 // 30 min
   }
 };
